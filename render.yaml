@@ -8,4 +8,5 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: OWNER_CHAT_ID
-        sync: false 
+        sync: false
+    pythonVersion: "3.11" 
