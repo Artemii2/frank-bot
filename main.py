@@ -1,9 +1,9 @@
 import logging
 from telegram.ext import (
-    Application,
+    Updater,
     CommandHandler,
     MessageHandler,
-    filters,
+    Filters,
     CallbackQueryHandler,
     ConversationHandler,
 )
@@ -30,10 +30,13 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     """Запуск бота."""
-    # Создаем приложение
-    application = Application.builder().token(BOT_TOKEN).build()
-    
-    # Создаем обработчик разговора
+    # Создаем Updater и передаем ему токен бота
+    updater = Updater(BOT_TOKEN)
+
+    # Получаем диспетчер для регистрации обработчиков
+    dispatcher = updater.dispatcher
+
+    # Создаем ConversationHandler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -44,22 +47,22 @@ def main() -> None:
                 CallbackQueryHandler(handle_first_visit, pattern="^answer_(yes|no)$")
             ],
             FOOD_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rate_[1-5]$")
+                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
             ],
             SERVICE_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rate_[1-5]$")
+                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
             ],
             ATMOSPHERE_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rate_[1-5]$")
+                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
             ],
             WILL_VISIT_AGAIN: [
                 CallbackQueryHandler(handle_will_visit_again, pattern="^answer_(yes|no)$")
             ],
             TEXT_REVIEW: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_review)
+                MessageHandler(Filters.text & ~Filters.command, handle_text_review)
             ],
             CONTACT_INFO: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_contact_info)
+                MessageHandler(Filters.text & ~Filters.command, handle_contact_info)
             ],
             CONFIRMATION: [
                 CallbackQueryHandler(handle_confirmation, pattern="^confirm_(yes|no)$")
@@ -69,10 +72,11 @@ def main() -> None:
     )
     
     # Добавляем обработчик разговора
-    application.add_handler(conv_handler)
+    dispatcher.add_handler(conv_handler)
     
     # Запускаем бота
-    application.run_polling()
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
     main() 

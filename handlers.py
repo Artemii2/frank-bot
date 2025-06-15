@@ -1,6 +1,6 @@
 import logging
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
+from telegram.ext import CallbackContext, ConversationHandler
 from states import *
 from keyboards import *
 from config import OWNER_CHAT_ID
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Хранение данных пользователей
 user_data = {}
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def start(update: Update, context: CallbackContext) -> int:
     """Обработчик команды /start."""
     user = update.effective_user
     user_data[user.id] = {}
@@ -23,27 +23,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "Начнем?"
     )
     
-    await update.message.reply_text(
+    update.message.reply_text(
         text=welcome_text,
         reply_markup=create_start_keyboard()
     )
     return MAIN_MENU
 
-async def start_survey(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def start_survey(update: Update, context: CallbackContext) -> int:
     """Начало опроса."""
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
-    await query.edit_message_text(
+    query.edit_message_text(
         text="Вы первый раз у нас в гостях?",
         reply_markup=create_yes_no_keyboard()
     )
     return FIRST_VISIT
 
-async def handle_first_visit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_first_visit(update: Update, context: CallbackContext) -> int:
     """Обработка ответа о первом посещении."""
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     user_id = query.from_user.id
     # Инициализируем данные пользователя, если их еще нет
@@ -53,16 +53,16 @@ async def handle_first_visit(update: Update, context: ContextTypes.DEFAULT_TYPE)
     is_first_visit = query.data == "answer_yes"
     user_data[user_id]["first_visit"] = "Да" if is_first_visit else "Нет"
     
-    await query.edit_message_text(
+    query.edit_message_text(
         text="Как вам наши блюда?",
         reply_markup=create_rating_keyboard()
     )
     return FOOD_RATING
 
-async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_rating(update: Update, context: CallbackContext) -> int:
     """Обработка оценок."""
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     user_id = query.from_user.id
     # Инициализируем данные пользователя, если их еще нет
@@ -80,7 +80,7 @@ async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     elif current_state == SERVICE_RATING:
         user_data[user_id]["service_rating"] = rating
         next_state = ATMOSPHERE_RATING
-        next_question = "общую атмосферу"
+        next_question = "общая атмосфера"
     else:
         user_data[user_id]["atmosphere_rating"] = rating
         next_state = WILL_VISIT_AGAIN
@@ -89,22 +89,22 @@ async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     context.user_data["current_state"] = next_state
     
     if next_state == WILL_VISIT_AGAIN:
-        await query.edit_message_text(
+        query.edit_message_text(
             text="Посетите ли вы нас еще раз?",
             reply_markup=create_yes_no_keyboard()
         )
     else:
-        await query.edit_message_text(
+        query.edit_message_text(
             text=f"Как вам {next_question}?",
             reply_markup=create_rating_keyboard()
         )
     
     return next_state
 
-async def handle_will_visit_again(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_will_visit_again(update: Update, context: CallbackContext) -> int:
     """Обработка ответа о повторном посещении."""
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     user_id = query.from_user.id
     # Инициализируем данные пользователя, если их еще нет
@@ -114,12 +114,12 @@ async def handle_will_visit_again(update: Update, context: ContextTypes.DEFAULT_
     will_visit = query.data == "answer_yes"
     user_data[user_id]["will_visit_again"] = "Да" if will_visit else "Нет"
     
-    await query.edit_message_text(
+    query.edit_message_text(
         text="Пожалуйста, напишите ваш отзыв в свободной форме:"
     )
     return TEXT_REVIEW
 
-async def handle_text_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_text_review(update: Update, context: CallbackContext) -> int:
     """Обработка текстового отзыва."""
     user_id = update.effective_user.id
     # Инициализируем данные пользователя, если их еще нет
@@ -128,13 +128,13 @@ async def handle_text_review(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     user_data[user_id]["text_review"] = update.message.text
     
-    await update.message.reply_text(
+    update.message.reply_text(
         "Хотите оставить свои контактные данные (имя и телефон)?\n"
         "Это необязательно. Напишите их или отправьте 'нет'."
     )
     return CONTACT_INFO
 
-async def handle_contact_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_contact_info(update: Update, context: CallbackContext) -> int:
     """Обработка контактной информации."""
     user_id = update.effective_user.id
     # Инициализируем данные пользователя, если их еще нет
@@ -158,16 +158,16 @@ async def handle_contact_info(update: Update, context: ContextTypes.DEFAULT_TYPE
         "Все верно?"
     )
     
-    await update.message.reply_text(
+    update.message.reply_text(
         text=confirmation_text,
         reply_markup=create_confirmation_keyboard()
     )
     return CONFIRMATION
 
-async def handle_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def handle_confirmation(update: Update, context: CallbackContext) -> int:
     """Обработка подтверждения отзыва."""
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     try:
         if query.data == "confirm_yes":
@@ -191,20 +191,20 @@ async def handle_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE
             try:
                 # Отправляем отзыв в группу
                 logger.info(f"Attempting to send message to group {OWNER_CHAT_ID}")
-                await context.bot.send_message(
+                context.bot.send_message(
                     chat_id=OWNER_CHAT_ID,
                     text=owner_message,
                     parse_mode='HTML'
                 )
                 logger.info("Message successfully sent to group")
                 
-                await query.edit_message_text(
+                query.edit_message_text(
                     text="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
                 )
             except Exception as e:
                 logger.error(f"Ошибка при отправке отзыва в группу: {str(e)}")
                 logger.error(f"ID группы: {OWNER_CHAT_ID}")
-                await query.edit_message_text(
+                query.edit_message_text(
                     text="⚠️ Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте позже."
                 )
         else:
@@ -215,7 +215,7 @@ async def handle_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE
                 del context.user_data["current_state"]
             
             # Начинаем опрос заново
-            await query.edit_message_text(
+            query.edit_message_text(
                 text="Вы первый раз у нас в гостях?",
                 reply_markup=create_yes_no_keyboard()
             )
@@ -231,12 +231,12 @@ async def handle_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE
         
     except Exception as e:
         logger.error(f"Ошибка в handle_confirmation: {str(e)}")
-        await query.edit_message_text(
+        query.edit_message_text(
             text="⚠️ Произошла ошибка. Пожалуйста, начните заново /start"
         )
         return ConversationHandler.END
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def cancel(update: Update, context: CallbackContext) -> int:
     """Отмена опроса."""
     user = update.effective_user
     if user.id in user_data:
@@ -244,7 +244,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if "current_state" in context.user_data:
         del context.user_data["current_state"]
     
-    await update.message.reply_text(
+    update.message.reply_text(
         "Опрос отменен. Чтобы начать заново, нажмите /start"
     )
     return ConversationHandler.END 
