@@ -12,7 +12,9 @@ from states import *
 from handlers import (
     start,
     start_survey,
+    handle_first_visit,
     handle_rating,
+    handle_will_visit_again,
     handle_text_review,
     handle_contact_info,
     handle_confirmation,
@@ -38,6 +40,9 @@ def main() -> None:
             MAIN_MENU: [
                 CallbackQueryHandler(start_survey, pattern="^start_survey$")
             ],
+            FIRST_VISIT: [
+                CallbackQueryHandler(handle_first_visit, pattern="^answer_(yes|no)$")
+            ],
             FOOD_RATING: [
                 CallbackQueryHandler(handle_rating, pattern="^rate_[1-5]$")
             ],
@@ -46,6 +51,9 @@ def main() -> None:
             ],
             ATMOSPHERE_RATING: [
                 CallbackQueryHandler(handle_rating, pattern="^rate_[1-5]$")
+            ],
+            WILL_VISIT_AGAIN: [
+                CallbackQueryHandler(handle_will_visit_again, pattern="^answer_(yes|no)$")
             ],
             TEXT_REVIEW: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_review)

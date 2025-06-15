@@ -1,10 +1,12 @@
 # Состояния разговора
 (
     MAIN_MENU,
+    FIRST_VISIT,
     FOOD_RATING,
     SERVICE_RATING,
     ATMOSPHERE_RATING,
+    WILL_VISIT_AGAIN,
     TEXT_REVIEW,
     CONTACT_INFO,
     CONFIRMATION,
-) = range(7) 
+) = range(9) 
