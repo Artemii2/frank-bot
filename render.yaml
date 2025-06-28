@@ -9,4 +9,8 @@ services:
         sync: false
       - key: OWNER_CHAT_ID
         sync: false
-    pythonVersion: "3.11" 
+    pythonVersion: "3.11"
+    buildFilter:
+      paths:
+        - requirements.txt
+        - "*.py" 
