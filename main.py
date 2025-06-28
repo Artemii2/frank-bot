@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     """Запуск бота."""
     # Создаем Updater и передаем ему токен бота
-    updater = Updater(BOT_TOKEN)
+    updater = Updater(BOT_TOKEN, use_context=True)
 
     # Получаем диспетчер для регистрации обработчиков
     dispatcher = updater.dispatcher
