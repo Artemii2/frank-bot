@@ -1,9 +1,11 @@
 import logging
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, ConversationHandler
 from states import *
 from keyboards import *
 from config import OWNER_CHAT_ID
+
+YANDEX_REVIEW_URL = "https://yandex.ru/maps/213/moscow/?add-review=true&indoorLevel=0&ll=37.638309%2C55.730340&mode=poi&poi%5Bpoint%5D=37.637890%2C55.730310&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D223077694891&tab=reviews&z=19.15"
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
@@ -54,13 +56,13 @@ def handle_first_visit(update: Update, context: CallbackContext) -> int:
     user_data[user_id]["first_visit"] = "Да" if is_first_visit else "Нет"
     
     query.edit_message_text(
-        text="Как вам наши блюда?",
-        reply_markup=create_rating_keyboard()
+        text="Оцените свой визит по 5-балльной шкале:",
+        reply_markup=create_visit_rating_keyboard()
     )
-    return FOOD_RATING
+    return VISIT_RATING
 
-def handle_rating(update: Update, context: CallbackContext) -> int:
-    """Обработка оценок."""
+def handle_visit_rating(update: Update, context: CallbackContext) -> int:
+    """Обработка оценки визита."""
     query = update.callback_query
     query.answer()
     
@@ -69,55 +71,52 @@ def handle_rating(update: Update, context: CallbackContext) -> int:
     if user_id not in user_data:
         user_data[user_id] = {}
     
-    rating = int(query.data.split("_")[1])
+    rating = int(query.data.split("_")[2])
     
-    # Определяем текущее состояние и следующее
-    current_state = context.user_data.get("current_state", FOOD_RATING)
-    if current_state == FOOD_RATING:
-        user_data[user_id]["food_rating"] = rating
-        next_state = SERVICE_RATING
-        next_question = "наш сервис"
-    elif current_state == SERVICE_RATING:
-        user_data[user_id]["service_rating"] = rating
-        next_state = ATMOSPHERE_RATING
-        next_question = "общая атмосфера"
-    else:
-        user_data[user_id]["atmosphere_rating"] = rating
-        next_state = WILL_VISIT_AGAIN
-        next_question = "посетите ли вы нас еще раз"
+    user_data[user_id]["visit_rating"] = rating
     
-    context.user_data["current_state"] = next_state
-    
-    if next_state == WILL_VISIT_AGAIN:
+    if rating >= 4:
+        user = query.from_user
+        # Отправляем уведомление в группу/админу
+        try:
+            context.bot.send_message(
+                chat_id=OWNER_CHAT_ID,
+                text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе!"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке уведомления о яндекс-отзыве: {str(e)}")
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 Оставить отзыв на Яндексе", url=YANDEX_REVIEW_URL)]
+        ])
         query.edit_message_text(
-            text="Посетите ли вы нас еще раз?",
-            reply_markup=create_yes_no_keyboard()
+            text="Спасибо за высокую оценку! Пожалуйста, оставьте отзыв на Яндексе:",
+            reply_markup=keyboard
         )
+        if user_id in user_data:
+            del user_data[user_id]
+        return ConversationHandler.END
     else:
         query.edit_message_text(
-            text=f"Как вам {next_question}?",
-            reply_markup=create_rating_keyboard()
+            text="Пожалуйста, напишите ваш отзыв в свободной форме:"
         )
-    
-    return next_state
+        return TEXT_REVIEW
 
-def handle_will_visit_again(update: Update, context: CallbackContext) -> int:
-    """Обработка ответа о повторном посещении."""
+def handle_yandex_review_done(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     query.answer()
-    
-    user_id = query.from_user.id
-    # Инициализируем данные пользователя, если их еще нет
-    if user_id not in user_data:
-        user_data[user_id] = {}
-    
-    will_visit = query.data == "answer_yes"
-    user_data[user_id]["will_visit_again"] = "Да" if will_visit else "Нет"
-    
+    user = query.from_user
+    # Уведомление в группу/админу
+    try:
+        context.bot.send_message(
+            chat_id=OWNER_CHAT_ID,
+            text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе!"
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке уведомления о яндекс-отзыве: {str(e)}")
     query.edit_message_text(
-        text="Пожалуйста, напишите ваш отзыв в свободной форме:"
+        text="Спасибо, что поделились своим мнением на Яндексе! Нам это очень важно!"
     )
-    return TEXT_REVIEW
+    return ConversationHandler.END
 
 def handle_text_review(update: Update, context: CallbackContext) -> int:
     """Обработка текстового отзыва."""
@@ -149,10 +148,7 @@ def handle_contact_info(update: Update, context: CallbackContext) -> int:
     confirmation_text = (
         "✅ Проверьте ваш отзыв:\n\n"
         f"👥 Первый визит: {review['first_visit']}\n"
-        f"🍴 Оценка блюд: {review['food_rating']}/5\n"
-        f"👨‍🍳 Оценка сервиса: {review['service_rating']}/5\n"
-        f"🎭 Оценка атмосферы: {review['atmosphere_rating']}/5\n"
-        f"🔄 Посещение снова: {review['will_visit_again']}\n"
+        f"⭐️ Оценка визита: {review['visit_rating']}/5\n"
         f"📝 Текстовый отзыв: {review['text_review']}\n"
         f"📱 Контактные данные: {review['contact_info']}\n\n"
         "Все верно?"
@@ -180,10 +176,7 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                 f"👤 От: {user.first_name} {user.last_name or ''} (@{user.username or 'нет'})\n"
                 f"🆔 ID: {user.id}\n"
                 f"👥 Первый визит: {review['first_visit']}\n"
-                f"🍴 Оценка блюд: {review['food_rating']}/5\n"
-                f"👨‍🍳 Оценка сервиса: {review['service_rating']}/5\n"
-                f"🎭 Оценка атмосферы: {review['atmosphere_rating']}/5\n"
-                f"🔄 Посещение снова: {review['will_visit_again']}\n"
+                f"⭐️ Оценка визита: {review['visit_rating']}/5\n"
                 f"📝 Текстовый отзыв:\n{review['text_review']}\n"
                 f"📱 Контактные данные: {review['contact_info']}"
             )
@@ -211,21 +204,17 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
             # Очищаем данные пользователя
             if query.from_user.id in user_data:
                 del user_data[query.from_user.id]
-            if "current_state" in context.user_data:
-                del context.user_data["current_state"]
             
             # Начинаем опрос заново
             query.edit_message_text(
-                text="Вы первый раз у нас в гостях?",
-                reply_markup=create_yes_no_keyboard()
+                text="Оцените свой визит по 5-балльной шкале:",
+                reply_markup=create_visit_rating_keyboard()
             )
-            return FIRST_VISIT
+            return VISIT_RATING
         
         # Очищаем данные пользователя
         if query.from_user.id in user_data:
             del user_data[query.from_user.id]
-        if "current_state" in context.user_data:
-            del context.user_data["current_state"]
         
         return ConversationHandler.END
         
@@ -241,8 +230,6 @@ def cancel(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
     if user.id in user_data:
         del user_data[user.id]
-    if "current_state" in context.user_data:
-        del context.user_data["current_state"]
     
     update.message.reply_text(
         "Опрос отменен. Чтобы начать заново, нажмите /start"

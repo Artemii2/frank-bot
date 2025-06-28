@@ -17,11 +17,11 @@ def create_yes_no_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
-def create_rating_keyboard():
-    """Создает клавиатуру с оценками от 1 до 5."""
+def create_visit_rating_keyboard():
+    """Создает клавиатуру с оценками визита от 1 до 5."""
     keyboard = [
         [
-            InlineKeyboardButton(str(i), callback_data=f"rating_{i}")
+            InlineKeyboardButton(str(i), callback_data=f"visit_rating_{i}")
             for i in range(1, 6)
         ]
     ]

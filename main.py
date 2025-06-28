@@ -13,8 +13,8 @@ from handlers import (
     start,
     start_survey,
     handle_first_visit,
-    handle_rating,
-    handle_will_visit_again,
+    handle_visit_rating,
+    handle_yandex_review_done,
     handle_text_review,
     handle_contact_info,
     handle_confirmation,
@@ -46,17 +46,9 @@ def main() -> None:
             FIRST_VISIT: [
                 CallbackQueryHandler(handle_first_visit, pattern="^answer_(yes|no)$")
             ],
-            FOOD_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
-            ],
-            SERVICE_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
-            ],
-            ATMOSPHERE_RATING: [
-                CallbackQueryHandler(handle_rating, pattern="^rating_[1-5]$")
-            ],
-            WILL_VISIT_AGAIN: [
-                CallbackQueryHandler(handle_will_visit_again, pattern="^answer_(yes|no)$")
+            VISIT_RATING: [
+                CallbackQueryHandler(handle_visit_rating, pattern="^visit_rating_[1-5]$"),
+                CallbackQueryHandler(handle_yandex_review_done, pattern="^yandex_review_done$")
             ],
             TEXT_REVIEW: [
                 MessageHandler(Filters.text & ~Filters.command, handle_text_review)
