@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 # Хранение данных пользователей
 user_data = {}
 
+def check_group_access(bot, chat_id):
+    """Проверяет доступность группы для бота."""
+    try:
+        chat = bot.get_chat(chat_id)
+        logger.info(f"Группа доступна: {chat.title} (ID: {chat_id})")
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка доступа к группе {chat_id}: {str(e)}")
+        return False
+
 def start(update: Update, context: CallbackContext) -> int:
     """Обработчик команды /start."""
     user = update.effective_user
@@ -65,26 +75,26 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
     """Обработка оценки визита."""
     query = update.callback_query
     query.answer()
-    
     user_id = query.from_user.id
-    # Инициализируем данные пользователя, если их еще нет
     if user_id not in user_data:
         user_data[user_id] = {}
-    
     rating = int(query.data.split("_")[2])
-    
     user_data[user_id]["visit_rating"] = rating
-    
     if rating >= 4:
         user = query.from_user
-        # Отправляем уведомление в группу/админу
-        try:
-            context.bot.send_message(
-                chat_id=OWNER_CHAT_ID,
-                text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе!"
-            )
-        except Exception as e:
-            logger.error(f"Ошибка при отправке уведомления о яндекс-отзыве: {str(e)}")
+        # Проверяем доступность группы перед отправкой
+        if check_group_access(context.bot, OWNER_CHAT_ID):
+            try:
+                context.bot.send_message(
+                    chat_id=OWNER_CHAT_ID,
+                    text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе!"
+                )
+                logger.info("Уведомление о яндекс-отзыве отправлено успешно")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке уведомления о яндекс-отзыве: {str(e)}")
+        else:
+            logger.error(f"Группа {OWNER_CHAT_ID} недоступна для бота")
+        
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("📝 Оставить отзыв на Яндексе", url=YANDEX_REVIEW_URL)]
         ])
@@ -183,20 +193,30 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
             
             try:
                 # Отправляем отзыв в группу
-                logger.info(f"Attempting to send message to group {OWNER_CHAT_ID}")
-                context.bot.send_message(
-                    chat_id=OWNER_CHAT_ID,
-                    text=owner_message,
-                    parse_mode='HTML'
-                )
-                logger.info("Message successfully sent to group")
+                logger.info(f"Attempting to send message to group {OWNER_CHAT_ID} (type: {type(OWNER_CHAT_ID)})")
+                logger.info(f"Message content: {owner_message}")
                 
-                query.edit_message_text(
-                    text="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
-                )
+                # Проверяем доступность группы перед отправкой
+                if check_group_access(context.bot, OWNER_CHAT_ID):
+                    context.bot.send_message(
+                        chat_id=OWNER_CHAT_ID,
+                        text=owner_message,
+                        parse_mode='HTML'
+                    )
+                    logger.info("Message successfully sent to group")
+                    
+                    query.edit_message_text(
+                        text="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
+                    )
+                else:
+                    logger.error(f"Группа {OWNER_CHAT_ID} недоступна для бота")
+                    query.edit_message_text(
+                        text="⚠️ Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте позже."
+                    )
             except Exception as e:
                 logger.error(f"Ошибка при отправке отзыва в группу: {str(e)}")
-                logger.error(f"ID группы: {OWNER_CHAT_ID}")
+                logger.error(f"ID группы: {OWNER_CHAT_ID} (type: {type(OWNER_CHAT_ID)})")
+                logger.error(f"Тип ошибки: {type(e).__name__}")
                 query.edit_message_text(
                     text="⚠️ Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте позже."
                 )
