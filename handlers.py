@@ -47,7 +47,7 @@ def start_survey(update: Update, context: CallbackContext) -> int:
     query.answer()
     
     query.edit_message_text(
-        text="Вы первый раз у нас в гостях? 🥗",
+        text="Вы первый раз у нас в гостях?",
         reply_markup=create_yes_no_keyboard()
     )
     return FIRST_VISIT
@@ -66,7 +66,7 @@ def handle_first_visit(update: Update, context: CallbackContext) -> int:
     user_data[user_id]["first_visit"] = "Да" if is_first_visit else "Нет"
     
     query.edit_message_text(
-        text="Оцените свой визит по 5-балльной шкале: 🥩🍖🍗🍔",
+        text="Оцените свой визит по 5-балльной шкале:",
         reply_markup=create_visit_rating_keyboard()
     )
     return VISIT_RATING
@@ -109,7 +109,7 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
     else:
         query.edit_message_text(
-            text="Пожалуйста, напишите ваш отзыв в свободной форме: 🍽️"
+            text="Пожалуйста, напишите ваш отзыв в свободной форме:"
         )
         return TEXT_REVIEW
 
@@ -141,7 +141,7 @@ def handle_text_review(update: Update, context: CallbackContext) -> int:
     
     update.message.reply_text(
         "Хотите оставить свои контактные данные (имя и телефон)?\n"
-        "Это необязательно. Напишите их или отправьте 'нет'. 🍷"
+        "Это необязательно. Напишите их или отправьте 'нет'."
     )
     return CONTACT_INFO
 
@@ -158,12 +158,12 @@ def handle_contact_info(update: Update, context: CallbackContext) -> int:
     # Формируем подтверждение
     review = user_data[user_id]
     confirmation_text = (
-        "✅ Проверьте ваш отзыв: 🥩\n\n"
+        "✅ Проверьте ваш отзыв:\n\n"
         f"👥 Первый визит: {review['first_visit']}\n"
         f"⭐️ Оценка визита: {review['visit_rating']}/5\n"
         f"📝 Текстовый отзыв: {review['text_review']}\n"
         f"📱 Контактные данные: {review['contact_info']}\n\n"
-        "Все верно? 🍖"
+        "Все верно?"
     )
     
     update.message.reply_text(
@@ -207,7 +207,7 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                     )
                     logger.info("Message successfully sent to group")
                     # Сначала закрываем окно с кнопками
-                    query.edit_message_text("Спасибо за ваш отзыв! Мы ценим ваше мнение! 🍖")
+                    query.edit_message_text()
                     # Затем отправляем картинку с благодарностью отдельным сообщением
                     context.bot.send_photo(
                         chat_id=query.from_user.id,
