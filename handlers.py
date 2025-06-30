@@ -204,10 +204,13 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                         parse_mode='HTML'
                     )
                     logger.info("Message successfully sent to group")
-                    
-                    query.edit_message_text(
-                        text="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
-                    )
+                    # Отправляем картинку с благодарностью
+                    with open('images/thank_you.jpg', 'rb') as photo:
+                        context.bot.send_photo(
+                            chat_id=query.message.chat_id,
+                            photo=photo,
+                            caption="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
+                        )
                 else:
                     logger.error(f"Группа {OWNER_CHAT_ID} недоступна для бота")
                     query.edit_message_text(
