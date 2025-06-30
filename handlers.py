@@ -29,10 +29,10 @@ def start(update: Update, context: CallbackContext) -> int:
     user_data[user.id] = {}
     
     welcome_text = (
-        "🍽 Добро пожаловать в ресторан FRANK by BASTA!\n\n"
-        "Пожалуйста, поделитесь вашими впечатлениями о посещении.\n"
+        "🍽️ Добро пожаловать в ресторан FRANK by BASTA! 🥩\n\n"
+        "Пожалуйста, поделитесь вашими впечатлениями о посещении. 🍖\n"
         "Это займет не более 2 минут.\n\n"
-        "Начнем?"
+        "Начнем? 🍔"
     )
     
     update.message.reply_text(
@@ -47,7 +47,7 @@ def start_survey(update: Update, context: CallbackContext) -> int:
     query.answer()
     
     query.edit_message_text(
-        text="Вы первый раз у нас в гостях?",
+        text="Вы первый раз у нас в гостях? 🥗",
         reply_markup=create_yes_no_keyboard()
     )
     return FIRST_VISIT
@@ -66,7 +66,7 @@ def handle_first_visit(update: Update, context: CallbackContext) -> int:
     user_data[user_id]["first_visit"] = "Да" if is_first_visit else "Нет"
     
     query.edit_message_text(
-        text="Оцените свой визит по 5-балльной шкале:",
+        text="Оцените свой визит по 5-балльной шкале: 🥩🍖🍗🍔",
         reply_markup=create_visit_rating_keyboard()
     )
     return VISIT_RATING
@@ -87,7 +87,7 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
             try:
                 context.bot.send_message(
                     chat_id=OWNER_CHAT_ID,
-                    text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе!"
+                    text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе! 🥩🍖"
                 )
                 logger.info("Уведомление о яндекс-отзыве отправлено успешно")
             except Exception as e:
@@ -99,7 +99,7 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
             [InlineKeyboardButton("📝 Оставить отзыв на Яндексе", url=YANDEX_REVIEW_URL)]
         ])
         query.edit_message_text(
-            text="Спасибо за высокую оценку! Пожалуйста, оставьте отзыв на Яндексе:",
+            text="Спасибо за высокую оценку! Пожалуйста, оставьте отзыв на Яндексе: 🍷🍽️",
             reply_markup=keyboard
         )
         if user_id in user_data:
@@ -107,7 +107,7 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
     else:
         query.edit_message_text(
-            text="Пожалуйста, напишите ваш отзыв в свободной форме:"
+            text="Пожалуйста, напишите ваш отзыв в свободной форме: 🍽️"
         )
         return TEXT_REVIEW
 
@@ -139,7 +139,7 @@ def handle_text_review(update: Update, context: CallbackContext) -> int:
     
     update.message.reply_text(
         "Хотите оставить свои контактные данные (имя и телефон)?\n"
-        "Это необязательно. Напишите их или отправьте 'нет'."
+        "Это необязательно. Напишите их или отправьте 'нет'. 🍷"
     )
     return CONTACT_INFO
 
@@ -156,12 +156,12 @@ def handle_contact_info(update: Update, context: CallbackContext) -> int:
     # Формируем подтверждение
     review = user_data[user_id]
     confirmation_text = (
-        "✅ Проверьте ваш отзыв:\n\n"
+        "✅ Проверьте ваш отзыв: 🥩\n\n"
         f"👥 Первый визит: {review['first_visit']}\n"
         f"⭐️ Оценка визита: {review['visit_rating']}/5\n"
         f"📝 Текстовый отзыв: {review['text_review']}\n"
         f"📱 Контактные данные: {review['contact_info']}\n\n"
-        "Все верно?"
+        "Все верно? 🍖"
     )
     
     update.message.reply_text(
@@ -204,11 +204,13 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                         parse_mode='HTML'
                     )
                     logger.info("Message successfully sent to group")
-                    # Отправляем картинку с благодарностью по URL
+                    # Сначала закрываем окно с кнопками
+                    query.edit_message_text("Спасибо за ваш отзыв! Мы ценим ваше мнение! 🍖")
+                    # Затем отправляем картинку с благодарностью отдельным сообщением
                     context.bot.send_photo(
                         chat_id=query.from_user.id,
                         photo="https://downloader.disk.yandex.ru/preview/0c87205a937244ea6a8fc5922f23b0509480148a7623eca8d9aa768eaa88d0fe/68635352/DQPz_uzFBQFbC85Azw-c2xGnqlheV9deujryIfiG6pN0Cq-APupSFdcd7maJCLF8H50_LYGaZ0SRIP2e-6HsuA%3D%3D?uid=0&filename=a8d5e7c2-3262-4b5e-b0b2-a2c654b38a89.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=0&tknv=v3&size=2048x2048",
-                        caption="💖 Спасибо за ваш отзыв! Мы ценим ваше мнение!"
+                        caption="Спасибо за ваш отзыв! Мы ценим ваше мнение! 🍖"
                     )
                 else:
                     logger.error(f"Группа {OWNER_CHAT_ID} недоступна для бота")
