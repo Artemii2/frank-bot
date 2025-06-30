@@ -30,9 +30,9 @@ def start(update: Update, context: CallbackContext) -> int:
     
     welcome_text = (
         "🍽️ Добро пожаловать в ресторан FRANK by BASTA! 🥩\n\n"
-        "Пожалуйста, поделитесь вашими впечатлениями о посещении. 🍖\n"
+        "Пожалуйста, поделитесь вашими впечатлениями о посещении.\n"
         "Это займет не более 2 минут.\n\n"
-        "Начнем? 🍔"
+        "Начнем?"
     )
     
     update.message.reply_text(
@@ -207,7 +207,7 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                     )
                     logger.info("Message successfully sent to group")
                     # Сначала закрываем окно с кнопками
-                    query.edit_message_text()
+                    query.edit_message_text("")
                     # Затем отправляем картинку с благодарностью отдельным сообщением
                     context.bot.send_photo(
                         chat_id=query.from_user.id,
