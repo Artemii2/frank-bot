@@ -204,14 +204,12 @@ def handle_confirmation(update: Update, context: CallbackContext) -> int:
                         parse_mode='HTML'
                     )
                     logger.info("Message successfully sent to group")
-                    # Сначала закрываем окно с кнопками
-                    query.edit_message_text("пп")
-                    # Затем отправляем картинку с благодарностью отдельным сообщением
-                    context.bot.send_photo(
-                        chat_id=query.from_user.id,
-                        photo="https://downloader.disk.yandex.ru/preview/0c87205a937244ea6a8fc5922f23b0509480148a7623eca8d9aa768eaa88d0fe/68635352/DQPz_uzFBQFbC85Azw-c2xGnqlheV9deujryIfiG6pN0Cq-APupSFdcd7maJCLF8H50_LYGaZ0SRIP2e-6HsuA%3D%3D?uid=0&filename=a8d5e7c2-3262-4b5e-b0b2-a2c654b38a89.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=0&tknv=v3&size=2048x2048",
-                        caption="Спасибо за ваш отзыв! Мы ценим ваше мнение! 🍖"
-                    )
+                    query.edit_message_media(
+            media=InputMediaPhoto(
+                media="https://downloader.disk.yandex.ru/preview/0c87205a937244ea6a8fc5922f23b0509480148a7623eca8d9aa768eaa88d0fe/68635352/DQPz_uzFBQFbC85Azw-c2xGnqlheV9deujryIfiG6pN0Cq-APupSFdcd7maJCLF8H50_LYGaZ0SRIP2e-6HsuA%3D%3D?uid=0&filename=a8d5e7c2-3262-4b5e-b0b2-a2c654b38a89.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=0&tknv=v3&size=2048x2048",
+                caption="Спасибо за ваш отзыв! Мы ценим ваше мнение! 🍖"
+            )
+        )
                 else:
                     logger.error(f"Группа {OWNER_CHAT_ID} недоступна для бота")
                     query.edit_message_text(
