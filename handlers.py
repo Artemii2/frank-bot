@@ -27,19 +27,14 @@ def start(update: Update, context: CallbackContext) -> int:
     """Обработчик команды /start."""
     user = update.effective_user
     user_data[user.id] = {}
-    apology_text = (
-        "❗ Дорогие гости!\n\n"
-        "Недавно произошла несанкционированная рассылка рекламы через нашего бота.\n"
-        "Мы приносим извинения за доставленные неудобства. Безопасность ваших данных для нас важна.\n\n"
-        "Бот полностью восстановлен и работает корректно. Спасибо за понимание!\n"
-    )
-    update.message.reply_text(apology_text)
+    
     welcome_text = (
         "🍽️ Добро пожаловать в ресторан FRANK by Баста! 🥩\n\n"
         "Пожалуйста, поделитесь вашими впечатлениями о посещении.\n"
         "Это займет не более 2 минут.\n\n"
         "Начнем?"
     )
+    
     update.message.reply_text(
         text=welcome_text,
         reply_markup=create_start_keyboard()
@@ -86,6 +81,15 @@ def handle_visit_rating(update: Update, context: CallbackContext) -> int:
     rating = int(query.data.split("_")[2])
     user_data[user_id]["visit_rating"] = rating
     if rating >= 4:
+        user = query.from_user
+        # Отправляем уведомление в группу/админу
+        try:
+            context.bot.send_message(
+                chat_id=OWNER_CHAT_ID,
+                text=f"✅ Гость {user.first_name} {user.last_name or ''} (@{user.username or 'нет'}) сообщил, что оставил отзыв на Яндексе! 🥩🍖"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке уведомления о яндекс-отзыве: {str(e)}")
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("📝 Оставить отзыв на Яндексе", url=YANDEX_REVIEW_URL)]
         ])
