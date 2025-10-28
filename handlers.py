@@ -5,7 +5,7 @@ from states import *
 from keyboards import *
 from config import OWNER_CHAT_ID
 
-YANDEX_REVIEW_URL = "https://yandex.ru/maps/213/moscow/?add-review=true&indoorLevel=0&ll=37.638309%2C55.730340&mode=poi&poi%5Bpoint%5D=37.637890%2C55.730310&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D223077694891&tab=reviews&z=19.15"
+YANDEX_REVIEW_URL = "https://yandex.ru/maps/org/frank_by_basta/96653514302/reviews/?ll=37.632484%2C55.769768&tab=reviews&z=16.23"
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
